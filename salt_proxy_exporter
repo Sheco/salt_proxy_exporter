@@ -5,6 +5,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
+import json
 
 node_exporter_cmd = "curl -qs http://localhost:9100/metrics"
 
@@ -26,6 +27,13 @@ args = parser.parse_args()
 # (the sensor name) and then tells salt to connect to the minion to get 
 # its node_exporter stats
 class ProxyHTTPServer(BaseHTTPRequestHandler):
+    def error(self, sensor, message):
+        self.send_response(500)
+        self.end_headers()
+
+        print('%s: %s'%(sensor, message.decode()))
+        self.wfile.write(message)
+    
     def do_GET(self):
         sensor = self.path[1:]
 
@@ -33,13 +41,23 @@ class ProxyHTTPServer(BaseHTTPRequestHandler):
             ['salt', '--out=json', '--static', sensor, 'cmd.run', node_exporter_cmd],
             stdout=PIPE, stderr=PIPE, close_fds=True
         )
-        buff = b''.join(process(cmd.stdout))
-        cmd.wait()
+        (stdout, stderr) = cmd.communicate()
 
-        self.send_response(200 if cmd.returncode == 0 else 500)
+        if cmd.returncode != 0:
+            self.error(sensor, stderr)
+            return
+
+        response = json.loads(stdout.decode())
+
+        if sensor not in response or response[sensor]=='':
+            self.error(sensor, b'Invalid response')
+            return
+
+        self.send_response(200)
         self.end_headers()
 
-        self.wfile.write(buff)
+        self.wfile.write(bytes(response[sensor], 'utf8'))
+
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """ Handle requests in a separate thread."""
