@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+# salt_proxy_exporter, written by Sergio Duran (July/2019)
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
+from subprocess import Popen, PIPE
+from argparse import ArgumentParser
+
+node_exporter_cmd = "curl -qs http://localhost:9100/metrics"
+
+# parse command line arguments
+parser = ArgumentParser('node_exporter_proxy')
+parser.add_argument('--address',
+    required=True,
+    type=str,
+    help='Address to bind to'
+)
+parser.add_argument('--port',
+    required=True,
+    type=int,
+    help='Port to bind to'
+)
+args = parser.parse_args()
+
+# Clean up the output, removing the sensor prefix that is added to the 
+# output when the command is ran by salt
+def process(output):
+    return ( line[line.find(b':')+2:] for line in output )
+
+# Receives requests, extracts the sensor name from the query string
+# and then tells salt to connect to the minion to get its node_exporter stats
+class ProxyHTTPServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        sensor = self.path[1:]
+
+        cmd = Popen(
+            ['salt', '--out=txt', sensor, 'cmd.run', node_exporter_cmd],
+            stdout=PIPE, close_fds=True
+        )
+        buff = b''.join(process(cmd.stdout))
+        cmd.wait()
+
+        self.send_response(200 if cmd.returncode == 0 else 500)
+        self.end_headers()
+
+        self.wfile.write(buff)
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """ Handle requests in a separate thread."""
+
+httpd = ThreadedHTTPServer((args.address, args.port), ProxyHTTPServer)
+httpd.serve_forever()
+
