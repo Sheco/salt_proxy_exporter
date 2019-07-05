@@ -1,0 +1,13 @@
+[Unit]
+Description=Salt Proxy Exporter
+Wants=network-online.target
+After=network-online.target
+
+
+[Service]
+ExecStart=/opt/salt_proxy_exporter/salt_proxy_exporter
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
+

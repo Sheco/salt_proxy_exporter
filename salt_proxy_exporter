@@ -6,23 +6,30 @@ from socketserver import ThreadingMixIn
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 import json
+import yaml
+
+try:
+    with open('/etc/default/salt_proxy_exporter.yml') as cfgfile:
+        cfg = yaml.load(cfgfile)
+except FileNotFoundError:
+    pass
 
 node_exporter_cmd = "curl -qs http://localhost:9100/metrics"
 
 # parse command line arguments
 parser = ArgumentParser('node_exporter_proxy')
 parser.add_argument('--address',
-    required=True,
+    default=cfg.get('address', None),
     type=str,
     help='Address to bind to'
 )
 parser.add_argument('--port',
-    required=True,
+    default=cfg.get('port', None),
     type=int,
     help='Port to bind to'
 )
 args = parser.parse_args()
-
+        
 # Receives requests, splits the query string extracting the first part 
 # (the sensor name) and then tells salt to connect to the minion to get 
 # its node_exporter stats
@@ -62,6 +69,7 @@ class ProxyHTTPServer(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """ Handle requests in a separate thread."""
 
+print('Binding Salt Proxy Exporter to %s:%s'%(args.address, args.port))
 httpd = ThreadedHTTPServer((args.address, args.port), ProxyHTTPServer)
 httpd.serve_forever()
 
