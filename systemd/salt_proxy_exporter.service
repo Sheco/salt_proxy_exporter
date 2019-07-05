@@ -5,6 +5,7 @@ After=network-online.target
 
 
 [Service]
+Restart=always
 ExecStart=/opt/salt_proxy_exporter/salt_proxy_exporter
 StandardOutput=journal+console
 
