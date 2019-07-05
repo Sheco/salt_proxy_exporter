@@ -13,7 +13,6 @@ try:
     with open('/etc/default/salt_proxy_exporter.yml') as cfgfile:
         cfg = yaml.load(cfgfile)
 except FileNotFoundError:
-node_exporter_cmd = "curl -qs http://localhost:9100/metrics"
     print('Config file /etc/default/salt_proxy_exporter.yml not found', 
           file=sys.stderr)
     sys.exit(1)
@@ -47,7 +46,7 @@ class ProxyHTTPServer(BaseHTTPRequestHandler):
         sensor = self.path[1:]
 
         cmd = Popen(
-            ['sudo', 'salt', '--out=json', '--static', sensor, 'cmd.run', node_exporter_cmd],
+            ['sudo', 'salt', '--out=json', '--static', sensor, 'cmd.run', cfg.remote_command],
             stdout=PIPE, stderr=PIPE, close_fds=True
         )
         (stdout, stderr) = cmd.communicate()

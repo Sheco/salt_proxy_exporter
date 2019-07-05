@@ -1,3 +1,4 @@
 ---
 address: localhost
 port: 9999
+remote_command: "curl -qs http://localhost:9100/metrics"
