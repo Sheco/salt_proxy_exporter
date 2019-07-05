@@ -7,14 +7,16 @@ from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 import json
 import yaml
+import sys
 
 try:
     with open('/etc/default/salt_proxy_exporter.yml') as cfgfile:
         cfg = yaml.load(cfgfile)
 except FileNotFoundError:
-    pass
-
 node_exporter_cmd = "curl -qs http://localhost:9100/metrics"
+    print('Config file /etc/default/salt_proxy_exporter.yml not found', 
+          file=sys.stderr)
+    sys.exit(1)
 
 # parse command line arguments
 parser = ArgumentParser('node_exporter_proxy')
