@@ -48,7 +48,7 @@ class ProxyHTTPServer(BaseHTTPRequestHandler):
         sensor = self.path[1:]
 
         cmd = Popen(
-            ['sudo', 'salt', '--out=json', '--static', sensor, 'cmd.run', cfg.remote_command],
+            ['sudo', 'salt', '--out=json', '--static', sensor, 'cmd.run', cfg['remote_command']],
             stdout=PIPE, stderr=PIPE, close_fds=True
         )
         (stdout, stderr) = cmd.communicate()
