@@ -8,12 +8,14 @@ from argparse import ArgumentParser
 import json
 import yaml
 import sys
+import os
 
 try:
-    with open('/etc/default/salt_proxy_exporter.yml') as cfgfile:
+    with open(os.path.join(os.path.dirname(__file__), 
+            'salt_proxy_exporter.yml')) as cfgfile:
         cfg = yaml.load(cfgfile)
 except FileNotFoundError:
-    print('Config file /etc/default/salt_proxy_exporter.yml not found', 
+    print('Config file salt_proxy_exporter.yml not found', 
           file=sys.stderr)
     sys.exit(1)
 
