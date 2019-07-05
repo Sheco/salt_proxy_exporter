@@ -21,7 +21,7 @@ optional arguments:
 
 # Installation as a systemd service
 
-The included [systemd service unit](salt_proxy_exporter.service) can be installed in /etc/systemd/system and enabled/started as usual.
+The included [systemd service unit](systemd/salt_proxy_exporter.service) can be installed in /etc/systemd/system and enabled/started as usual.
 
 ```
 # systemctl daemon-reload
