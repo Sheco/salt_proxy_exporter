@@ -20,7 +20,7 @@ except FileNotFoundError:
     sys.exit(1)
 
 # parse command line arguments
-parser = ArgumentParser('node_exporter_proxy')
+parser = ArgumentParser('salt_proxy_exporter')
 parser.add_argument('--address',
     default=cfg.get('address', None),
     type=str,
